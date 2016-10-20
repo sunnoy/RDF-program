@@ -1,18 +1,90 @@
-pro THIIS ;,xrdfile,bgfile,u,rho0,c1,c2,c3,c4,t,R,S,lambda,alpha
-  ;data input begin
-  ;get PDF from XRD data,(for example:xrdfile='C:\Users\IDLWorkspace82\get\xrd.txt')
-  ;input the information and parameters
-  xrdfile=
-  bgfile=
-  u=0.32 ;refer to the DAT file: 'Um - atomic weight.dat'; rho is g/cm^3
-  rho0=0.35 ;the value of
+PRO TLB_EVENT, ev
+  WIDGET_CONTROL, ev.TOP,get_uvalue= gz
+  
+  WIDGET_CONTROL, ev.id, GET_UVALUE=eventval
+  case eventval of
+  
+    'xrd': BEGIN
+      md = DIALOG_PICKFILE(filter ='*.txt')
+      widget_control, gz.xrd,  SET_VALUE=md
+      COMMON sss, ss, ssd ;设定全局变量
+      ss = md   ;转换为全局变量
+    END
+    
+    'xrdd': BEGIN
+      mdd = DIALOG_PICKFILE(filter ='*.txt')
+      widget_control, gz.xrdd,  SET_VALUE=mdd
+      ssd = mdd
+    END
+    
+    ;清空输入数据
+    'reset': BEGIN
+      widget_control, gz.u,  SET_VALUE=''
+      widget_control, gz.p,  SET_VALUE=''
+      widget_control, gz.c,  SET_VALUE=''
+      widget_control, gz.h,  SET_VALUE=''
+      widget_control, gz.n,  SET_VALUE=''
+      widget_control, gz.o,  SET_VALUE=''
+      widget_control, gz.t,  SET_VALUE=''
+      widget_control, gz.r,  SET_VALUE=''
+      widget_control, gz.s,  SET_VALUE=''
+      widget_control, gz.l,  SET_VALUE=''
+      widget_control, gz.a,  SET_VALUE=''
+      widget_control, gz.xrd,  SET_VALUE=''
+      widget_control, gz.xrdd,  SET_VALUE=''
+    END
+    
+    ;启动起算
+    'run': BEGIN
+      aa = ss
+      b = ssd
+      widget_control, gz.u,  get_value=us
+      u=FLOAT(us)
+      widget_control, gz.p,  get_value=ps
+      p=fLOAT(ps)
+      widget_control, gz.c,  get_value=cs
+      c=fLOAT(cs)
+      widget_control, gz.h,  get_value=hs
+      h=fLOAT(hs)
+      widget_control, gz.n,  get_value=ns
+      n=fLOAT(ns)
+      widget_control, gz.o,  get_value=os
+      o=fLOAT(os)
+      widget_control, gz.t,  get_value=ts
+      t=fLOAT(ts)
+      widget_control, gz.r,  get_value=rs
+      r=fLOAT(rs)
+      widget_control, gz.s,  get_value=ss
+      s=fLOAT(ss)
+      widget_control, gz.l,  get_value=ls
+      l=fLOAT(ls)
+      widget_control, gz.a,  get_value=as
+      a=fLOAT(as)
+      
+      pri, aa, b, u, p, c, h, n, o, t, r, s, l, a ;输入数据传入计算过程
+      
+    END
+    
+    
+  endcase
+  
+END
+
+pro pri, aa, b, u, p, c, h, n, o, t, r, s, l, a ;计算过程
+  ;print, aa ;b, u, p, c, h, n, o, t, r, s, l, a
+  ;
+  ;---------------------------------------------
+  xrdfile = aa
+  bgfile = b
+  u = u ;refer to the DAT file: 'Um - atomic weight.dat'; rho is g/cm^3
+  rho0 = p ;the value of
   ;Scattering factors: 1-C,2-H,3-N,4-0;
-  c1=0.25 & c2=0.35 & c3=0.25 & c4=0.36; atomic concentration;
-  t=0.214;mm
-  R=0.351;mm
-  S=0.213;rad
-  lambda=0.701; wavelength - Mo=0.701; Cu=1.54
-  alpha=0.014
+  c1 = c & c2 = h & c3 = n & c4 = o; atomic concentration;
+  t = t;mm
+  R = r;mm
+  S = s;rad
+  lambda = l; wavelength - Mo=0.701; Cu=1.54
+  alpha = a
   ;data input end
   
   
@@ -29,9 +101,9 @@ pro THIIS ;,xrdfile,bgfile,u,rho0,c1,c2,c3,c4,t,R,S,lambda,alpha
   balyuzi3=[0.907000005,64.1555023,2.89720011,20.8507004,1.16589999,7.75759983,1.55260003,1.03349996,0.476900011,0.351599991]
   balyuzi4=[0.8847,52.0063019,3.21889997,16.4487,1.79900002,6.59579992,1.55379999,0.814300001,0.54339999,0.281500012]
   ;read data from files.
-  xrdRead=read_ascii(xrdfile)
+  xrdRead=READ_ASCII(xrdfile)
   ;read backgroudfile.
-  bgRead=read_ascii(bgfile)
+  bgRead=READ_ASCII(bgfile)
   im=xrdRead.(0) & ib=bgRead.(0)
   theta2=im(0,*)*!pi/180.0 & theta=theta2/2.0
   ar=0.5+(0.5-t*cos(theta)/(R*S))*exp(-2.0*u*t/sin(theta))
@@ -144,7 +216,105 @@ pro THIIS ;,xrdfile,bgfile,u,rho0,c1,c2,c3,c4,t,R,S,lambda,alpha
   rdfPaths=strmid(xrdfile,0,sn-4)+ '-rdf.dat '
   openw,lun,rdfPaths,/get_lun & printf,lun,rdfData,format= ' (f10.3,f15.3) ' &
   free_lun,lun
-  print ,'Calculation done and PDF data files has been calculated '
+;---------------------------------------------
+  
+  
+end
+
+PRO pan
+  ;- Create top level base
+  tlb = widget_base(column=1,title='PAN-RDF数据处理', $
+    tlb_frame_attr=1,XOFFSET=500,YOFFSET=500)
+    
+  label = widget_label(tlb, value='欢  迎  使  用  ！',/align_center)
+  
+  ;- Create base to hold everything except buttons
+  main = widget_base(tlb, column=1, frame=1)
+  ;- Create file widgets
+  fbase = widget_base(main, row=1, /base_align_center)
+  label = widget_label(fbase, value='XRD数据文件')
+  xrd = widget_text(fbase, /editable, xsize=25)
+  butt = widget_button(fbase, value='打开文件',UVALUE='xrd')
+  
+  fbase = widget_base(main, row=1, /base_align_center)
+  label = widget_label(fbase, value='XRD背景文件')
+  xrdd = widget_text(fbase, /editable, xsize=25)
+  butt = widget_button(fbase, value='打开文件',UVALUE='xrdd')
+  
+  
+  
+  ;- Create array size widgets
+  abase = widget_base(main, row=11, $
+    /grid_layout, /base_align_center)
+  label = widget_label(abase, value='线吸收系数:')
+  u = widget_text(abase, /editable, xsize=8,UVALUE='u')
+  
+  label = widget_label(abase, value='平均原子数密度（g/cm^3）:')
+  p = widget_text(abase, /editable, xsize=8,UVALUE='p')
+  
+  label = widget_label(abase, value='C原子个数百分比:')
+  c = widget_text(abase, /editable, xsize=8,UVALUE='c')
+  
+  label = widget_label(abase, value='H原子个数百分比:')
+  h = widget_text(abase, /editable, xsize=8,UVALUE='h')
+  
+  label = widget_label(abase, value='N原子个数百分比:')
+  n = widget_text(abase, /editable, xsize=8,UVALUE='n')
+  
+  label = widget_label(abase, value='O原子个数百分比:')
+  o= widget_text(abase, /editable, xsize=8,UVALUE='o')
+  
+  label = widget_label(abase, value='t:')
+  t = widget_text(abase, /editable, xsize=8,UVALUE='t')
+  
+  label = widget_label(abase, value='R:')
+  r = widget_text(abase, /editable, xsize=8,UVALUE='r')
+  
+  label = widget_label(abase, value='S:')
+  s = widget_text(abase, /editable, xsize=8,UVALUE='s')
+  
+  label = widget_label(abase, value='lambda:')
+  l = widget_text(abase, /editable, xsize=8,UVALUE='l')
+  
+  label = widget_label(abase, value='alpha:')
+  a = widget_text(abase, /editable, xsize=8,UVALUE='a')
+  
+  ;- Create ok and cancel buttons
+  
+  
+  bbase = widget_base(tlb, row=1, /align_center)
+  buttok = widget_button(bbase, value='计算喽!', xsize=75,UVALUE='run')
+  buttres = widget_button(bbase, value='清空', xsize=75,UVALUE='reset')
+  ;显示窗口
+  widget_control, tlb, /realize
+  ;构造参数中介--结构体
+  gz={$
+    u: u,      $
+    p: p,      $
+    c: c,      $
+    h: h,      $
+    n: n,      $
+    o: o,      $
+    t: t,      $
+    r: r,      $
+    s: s,      $
+    l: l,      $
+    a: a,      $
+    xrd:xrd,   $
+    xrdd:xrdd  $
+    
+    }
+    
+  WIDGET_CONTROL,tlb,set_UValue = gz ;将tlb参数信息传递给变量，等待填入数据
+  
+  ;响应事件
+   XMANAGER, 'tlb', tlb, /NO_BLOCK
   
 END
+
+
+;构造XMANAGER函数----------------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------------------------------
+;-------------------------------------------------------------------------------------------------------
+
 
